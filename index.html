@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dorm Directory</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+    <header class="bg-blue-600 text-white p-4">
+        <h1 class="text-center text-2xl font-bold">Dorm Directory</h1>
+    </header>
+
+    <main class="p-4">
+        <section>
+            <h2 class="text-xl font-semibold mb-4">Dorms</h2>
+            <div class="mb-4">
+                <label for="filter" class="block text-sm font-medium text-gray-700">Filter by Name:</label>
+                <input type="text" id="filter"
+                    class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="Search dorms...">
+            </div>
+            <div id="dorms-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Dorm cards will be dynamically added here -->
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const apiUrl = "https://script.google.com/macros/s/AKfycbzOfXiAbJXBbF-6sn6UX2KuXGMGD0QtOTM_W068aBz-urM3f-D5J6BJyiop34Yknsax/exec";
+
+        const dormsGrid = document.getElementById('dorms-grid');
+        const filterInput = document.getElementById('filter');
+
+        // Function to render dorms
+        function renderDorms(dorms, filter = '') {
+            dormsGrid.innerHTML = '';
+            const filteredDorms = dorms.filter(dorm => dorm.name && dorm.name.toLowerCase().includes(filter.toLowerCase()));
+
+            filteredDorms.forEach(dorm => {
+                const dormCard = document.createElement('div');
+                dormCard.className = 'bg-white p-4 rounded-lg shadow-md';
+                dormCard.innerHTML = `
+          <h3 class="text-lg font-bold mb-2">${dorm.name || 'Unnamed Dorm'}</h3>
+          <p><strong>Capacity:</strong> ${dorm.capacity || 'N/A'}</p>
+          <p><strong>Location:</strong> ${dorm.location || 'N/A'}</p>
+          <p><strong>Amenities:</strong> ${(dorm.amenities || []).join(', ')}</p>
+        `;
+                dormsGrid.appendChild(dormCard);
+            });
+        }
+
+        // Fetch data from API
+        async function fetchDorms() {
+            try {
+                const response = await fetch(apiUrl);
+                console.log('API Response:', response); // Log the raw response
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Parsed Data:', data); // Log the parsed data
+
+                // Adjusted to match the API format
+                const dorms = data.dorms.map(dorm => ({
+                    name: dorm.Name,
+                    capacity: dorm.Capacity,
+                    location: dorm.Quad,
+                    amenities: [
+                        `Sex: ${dorm.Sex}`,
+                        `Colors: ${dorm.Colors}`,
+                        `Chapel: ${dorm.Chapel}`,
+                        `Mascot: ${dorm.Mascot}`,
+                        `Notes: ${dorm.Notes}`
+                    ]
+                }));
+
+                renderDorms(dorms);
+
+                // Add filter functionality
+                filterInput.addEventListener('input', (e) => {
+                    renderDorms(dorms, e.target.value);
+                });
+            } catch (error) {
+                console.error('Error fetching dorms:', error);
+                dormsGrid.innerHTML = '<p class="text-red-500">Failed to load dorms. Please try again later.</p>';
+            }
+        }
+
+        // Initial fetch
+        fetchDorms();
+    </script>
+</body>
+
+</html>
